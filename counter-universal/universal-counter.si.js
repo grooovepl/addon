@@ -1,8 +1,14 @@
 (() => {
+  const CDN = 'https://cdn.jsdelivr.net/gh/grooovepl/addon';
+
   const getCacheBuster = () => {
     const date = new Date();
-    const fallback = `${date.getDate()}-${date.getMonth()}-${date.getFullYear()}`;
+    return `${date.getDate()}-${date.getMonth()}-${date.getFullYear()}`;
+  };
 
+  const cdnWithTag = (version) => `${CDN}@uc-${version}`;
+
+  const getAddonVersion = () => {
     try {
       const key = 'ga-universal-counter-version';
       const entryJson = localStorage.getItem(key);
@@ -11,16 +17,27 @@
       if (data.version) {
         return data.version;
       }
-    } catch (error) {
-      return fallback;
-    }
+    } catch (error) { }
 
-    return fallback;
+    return null;
+  };
+
+  const loadStyles = (version) => {
+    const href = version
+      ? `${cdnWithTag(version)}/counter-universal/style.css`
+      : `${CDN}/counter-universal/style.css?v=${getCacheBuster()}`;
+
+    const styleLink = document.createElement('link');
+    styleLink.setAttribute('rel', 'stylesheet');
+    styleLink.setAttribute('type', 'text/css');
+    styleLink.setAttribute('href', href);
+
+    document.body.appendChild(styleLink);
   };
 
   const getScript = (url) => {
     const script = document.createElement('script');
-    script.src = url;
+    script.setAttribute('src', url);
     document.body.appendChild(script);
   };
 
@@ -32,5 +49,11 @@
     setTimeout(getScriptWrapper, 100, url);
   };
 
-  getScriptWrapper('https://cdn.jsdelivr.net/gh/grooovepl/addon/counter-universal/prod.js?v=' + getCacheBuster());
+  const addonVersion = getAddonVersion();
+  const addonUrl = addonVersion
+    ? `${cdnWithTag(addonVersion)}/counter-universal/prod.js`
+    : `${CDN}/counter-universal/prod.js?v=${getCacheBuster()}`;
+
+  loadStyles(addonVersion);
+  getScriptWrapper(addonUrl);
 })();

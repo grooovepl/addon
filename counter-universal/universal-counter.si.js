@@ -22,6 +22,25 @@
     return null;
   };
 
+  const addonVersion = getAddonVersion();
+
+  const reportAddonError = (error) => {
+    fetch('https://counter-service.grooove.pl/api/reports', {
+      method: 'post',
+      credentials: 'include',
+      mode: 'cors',
+      headers: {
+        'access-control-request-headers': 'content-type',
+        'content-type': 'application/json;charset=utf-8',
+      },
+      body: JSON.stringify({
+        error,
+        margonemInterface: 'si',
+        addonVersion: addonVersion || '2.3.0'
+      }),
+    });
+  };
+
   const loadStyles = (version) => {
     const href = version
       ? `${cdnWithTag(version)}/counter-universal/style.css`
@@ -31,6 +50,7 @@
     styleLink.setAttribute('rel', 'stylesheet');
     styleLink.setAttribute('type', 'text/css');
     styleLink.setAttribute('href', href);
+    styleLink.addEventListener('error', () => reportAddonError('CSS has not been loaded.'));
 
     document.body.appendChild(styleLink);
   };
@@ -38,18 +58,18 @@
   const getScript = (url) => {
     const script = document.createElement('script');
     script.setAttribute('src', url);
+    script.addEventListener('error', () => reportAddonError('Addon has not been loaded.'));
     document.body.appendChild(script);
   };
 
   const getScriptWrapper = (url) => {
-    if (window.Engine || window.g) {
+    if (window.g.init === 5) {
       return getScript(url);
     }
 
     setTimeout(getScriptWrapper, 100, url);
   };
 
-  const addonVersion = getAddonVersion();
   const addonUrl = addonVersion
     ? `${cdnWithTag(addonVersion)}/counter-universal/prod.js`
     : `${CDN}/counter-universal/prod.js?v=${getCacheBuster()}`;

@@ -25,6 +25,8 @@
   const addonVersion = getAddonVersion();
 
   const reportAddonError = (error) => {
+    console.error('universal-counter: ' + error);
+
     fetch('https://counter-service.grooove.pl/api/reports', {
       method: 'post',
       credentials: 'include',

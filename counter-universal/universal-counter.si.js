@@ -38,7 +38,7 @@
       body: JSON.stringify({
         error,
         margonemInterface: 'si',
-        addonVersion: addonVersion || '2.3.0'
+        addonVersion: addonVersion || '2.8'
       }),
     });
   };
@@ -52,7 +52,7 @@
     styleLink.setAttribute('rel', 'stylesheet');
     styleLink.setAttribute('type', 'text/css');
     styleLink.setAttribute('href', href);
-    styleLink.addEventListener('error', () => reportAddonError('CSS has not been loaded.'));
+    styleLink.addEventListener('error', () => reportAddonError(`CSS has not been loaded: ${href}`));
 
     document.body.appendChild(styleLink);
   };
@@ -60,7 +60,7 @@
   const getScript = (url) => {
     const script = document.createElement('script');
     script.setAttribute('src', url);
-    script.addEventListener('error', () => reportAddonError('Addon has not been loaded.'));
+    script.addEventListener('error', () => reportAddonError(`Addon has not been loaded: ${url}`));
     document.body.appendChild(script);
   };
 

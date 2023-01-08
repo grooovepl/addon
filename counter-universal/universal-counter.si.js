@@ -1,30 +1,21 @@
 (() => {
+  const INSTALLER_VERSION = '2.10';
+  const ADDON_VERSION = getAddonVersion();
+  const CACHE_BUSTER = getCacheBuster();
+
   const CDN = 'https://cdn.jsdelivr.net/gh/grooovepl/addon';
+  const CDN_WITH_TAG = `${CDN}@uc-${ADDON_VERSION}`;
 
-  const getCacheBuster = () => {
-    const date = new Date();
-    return `${date.getDate()}-${date.getMonth()}-${date.getFullYear()}`;
-  };
+  const SCRIPT_URL = ADDON_VERSION
+    ? `${CDN_WITH_TAG}/counter-universal/prod.js`
+    : `${CDN}/counter-universal/prod.js?v=${CACHE_BUSTER}`;
 
-  const cdnWithTag = (version) => `${CDN}@uc-${version}`;
+  const CSS_URL = ADDON_VERSION
+    ? `${CDN_WITH_TAG}/counter-universal/style.css`
+    : `${CDN}/counter-universal/style.css?v=${CACHE_BUSTER}`;
 
-  const getAddonVersion = () => {
-    try {
-      const key = 'ga-universal-counter-version';
-      const entryJson = localStorage.getItem(key);
-      const data = JSON.parse(entryJson);
 
-      if (data.version) {
-        return data.version;
-      }
-    } catch (error) { }
-
-    return null;
-  };
-
-  const addonVersion = getAddonVersion();
-
-  const reportAddonError = (error) => {
+  function reportAddonError(error) {
     console.error('universal-counter: ' + error);
 
     fetch('https://counter-service.grooove.pl/api/reports', {
@@ -36,46 +27,68 @@
         'content-type': 'application/json;charset=utf-8',
       },
       body: JSON.stringify({
-        error,
-        margonemInterface: 'si',
-        addonVersion: addonVersion || '2.8'
+        error: `Installer error: ${error}`,
+        margonemInterface: 'SI',
+        addonVersion: ADDON_VERSION || INSTALLER_VERSION
       }),
     });
-  };
+  }
 
-  const loadStyles = (version) => {
-    const href = version
-      ? `${cdnWithTag(version)}/counter-universal/style.css`
-      : `${CDN}/counter-universal/style.css?v=${getCacheBuster()}`;
+  function getCacheBuster() {
+    const date = new Date();
+    return `${date.getDate()}-${date.getMonth()}-${date.getFullYear()}`;
+  }
 
+  function isGameReady() {
+    return (
+      typeof window.g !== 'undefined'
+      && window.g.init === 5
+    );
+  }
+
+  function getAddonVersion() {
+    try {
+      const key = 'ga-universal-counter-version';
+      const entryJson = localStorage.getItem(key);
+      const data = JSON.parse(entryJson);
+
+      if (data.version) {
+        return data.version;
+      }
+    } catch (error) { }
+
+    return null;
+  }
+
+  function loadCss() {
     const styleLink = document.createElement('link');
     styleLink.setAttribute('rel', 'stylesheet');
     styleLink.setAttribute('type', 'text/css');
-    styleLink.setAttribute('href', href);
-    styleLink.addEventListener('error', () => reportAddonError(`CSS has not been loaded: ${href}`));
+    styleLink.setAttribute('href', CSS_URL);
+    styleLink.addEventListener('error', () => reportAddonError(`CSS has not been loaded (v${INSTALLER_VERSION} SI): ${CSS_URL}`));
 
     document.body.appendChild(styleLink);
-  };
+  }
 
-  const getScript = (url) => {
+  function loadScript() {
     const script = document.createElement('script');
-    script.setAttribute('src', url);
-    script.addEventListener('error', () => reportAddonError(`Addon has not been loaded: ${url}`));
+    script.setAttribute('src', SCRIPT_URL);
+    script.addEventListener('error', () => reportAddonError(`Addon has not been loaded (v${INSTALLER_VERSION} SI): ${SCRIPT_URL}`));
     document.body.appendChild(script);
-  };
+  }
 
-  const getScriptWrapper = (url) => {
-    if (window.g.init === 5) {
-      return getScript(url);
+  function loadScriptWrapper() {
+    if (isGameReady()) {
+      return loadScript();
     }
+    setTimeout(loadScriptWrapper, 100);
+  }
 
-    setTimeout(getScriptWrapper, 100, url);
-  };
 
-  const addonUrl = addonVersion
-    ? `${cdnWithTag(addonVersion)}/counter-universal/prod.js`
-    : `${CDN}/counter-universal/prod.js?v=${getCacheBuster()}`;
-
-  loadStyles(addonVersion);
-  getScriptWrapper(addonUrl);
+  try {
+    loadCss();
+    loadScriptWrapper();
+  } catch (error) {
+    reportAddonError(error);
+  }
 })();

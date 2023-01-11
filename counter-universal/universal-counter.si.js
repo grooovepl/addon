@@ -1,5 +1,5 @@
 (() => {
-  const INSTALLER_VERSION = '2.10';
+  const INSTALLER_VERSION = '2.11';
   const ADDON_VERSION = getAddonVersion();
   const CACHE_BUSTER = getCacheBuster();
 
@@ -41,8 +41,8 @@
 
   function isGameReady() {
     return (
-      typeof window.g !== 'undefined'
-      && window.g.init === 5
+      typeof window.g === 'object'
+      && typeof window.successData === 'function'
     );
   }
 

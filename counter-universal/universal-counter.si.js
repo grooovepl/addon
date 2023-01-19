@@ -1,5 +1,5 @@
 (() => {
-  const INSTALLER_VERSION = '2.11';
+  const INSTALLER_VERSION = '2.12';
   const ADDON_VERSION = getAddonVersion();
   const CACHE_BUSTER = getCacheBuster();
 
@@ -81,7 +81,7 @@
     if (isGameReady()) {
       return loadScript();
     }
-    setTimeout(loadScriptWrapper, 100);
+    setTimeout(loadScriptWrapper, 20);
   }
 
 
